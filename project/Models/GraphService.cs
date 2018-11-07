@@ -73,8 +73,9 @@ namespace ContosoAirlines.Models
             await HttpPost($"/teams/{teamId}/channels/{channel.Id}/tabs",
                 new TeamsTab()
                 {
-                   Name = "Map",
-                    TeamsAppId = "com.microsoft.teamspace.tab.web", // Website tab
+                    Name = "Map",
+                    TeamsApp = $"{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
+                    // It's serialized as "teamsApp@odata.bind" : "{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
                     Configuration = new TeamsTabConfiguration()
                     {
                         EntityId = null,
@@ -131,7 +132,8 @@ namespace ContosoAirlines.Models
                 new TeamsTab
                 {
                     Name = "Challenging Passengers",
-                    TeamsAppId = "com.microsoft.teamspace.tab.web",
+                    TeamsApp = $"{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
+                    // It's serialized as "teamsApp@odata.bind" : "{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
                     Configuration = new TeamsTabConfiguration
                     {
                         ContentUrl = list.WebUrl,

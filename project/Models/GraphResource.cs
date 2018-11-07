@@ -104,62 +104,24 @@ namespace ContosoAirlines.Models
 
     public class CloneOperationRequest
     {
-        /// <summary>
-        /// Gets or sets the display name of the new team. Required.
-        /// </summary>
         [JsonProperty(PropertyName = "displayName")]
         public string DisplayName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the decription of the new team. Optional.
-        /// </summary>
         [JsonProperty(PropertyName = "description")]
         public string Description { get; set; }
-
-        /// <summary>
-        /// Gets or sets the mail nickname of the new team. Optional.
-        /// </summary>
         [JsonProperty(PropertyName = "mailNickName")]
         public string MailNickName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the classification of the Group backing the new team. Optional.
-        /// </summary>
         [JsonProperty(PropertyName = "classification")]
         public string Classification { get; set; }
-
-        /// <summary>
-        /// Gets or sets the visibility of the team in Exchange. Optional.
-        /// </summary>
         [JsonProperty("visibility")]
         public string Visibility { get; set; }
     }
 
     public enum AsyncOperationStatus
     {
-        /// <summary>
-        /// Invalid value.
-        /// </summary>
         Invalid = 0,
-
-        /// <summary>
-        /// Indicates that the operation has not started.
-        /// </summary>
         NotStarted = 1,
-
-        /// <summary>
-        /// Indicates that the operation in running.
-        /// </summary>
         InProgress = 2,
-
-        /// <summary>
-        /// Indicates that the operation has succeeded.
-        /// </summary>
         Succeeded = 3,
-
-        /// <summary>
-        /// Indicates that the operation has failed.
-        /// </summary>
         Failed = 4
     }
     public enum AsyncOperationType
@@ -291,6 +253,23 @@ namespace ContosoAirlines.Models
         public T[] value { get; set; }
     }
 
+    //class TeamsAppJsonConverter : JsonConverter
+    //{
+    //    public override bool CanConvert(Type objectType)
+    //    => objectType.IsAssignableFrom(typeof(TeamsApp));
+    //    public override bool CanRead => false;
+    //    public override bool CanWrite => true;
+    //    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    //    {
+    //        TeamsApp app = (TeamsApp) value;
+    //        writer.WriteValue(app.Id);
+    //    }
+    //    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+    //}
+
     public sealed class TeamsTab
     {
         [JsonProperty(PropertyName = "id")]
@@ -298,10 +277,14 @@ namespace ContosoAirlines.Models
         public string Name { get; set; } // obsolete
         [JsonProperty(PropertyName = "displayName")]
         public string DisplayName { get; set; }
-        [JsonProperty(PropertyName = "teamsAppId")]
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string TeamsAppId { get; set; }
-        [JsonProperty(PropertyName = "teamsApp")]
-        public TeamsApp TeamsApp { get; set; }
+
+        [JsonProperty(PropertyName = "teamsApp@odata.bind", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        //[JsonConverter(typeof(TeamsAppJsonConverter))]
+        public string TeamsApp { get; set; }
+
         [JsonProperty(PropertyName = "sortOrderIndex")]
         public string SortOrderIndex { get; set; }
         [JsonProperty(PropertyName = "messageId")]
