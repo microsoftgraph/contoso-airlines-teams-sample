@@ -157,12 +157,15 @@ namespace ContosoAirlines.Models
                 if (!t.IsArchived)
                 {
                     // See if it's already installed
-                    var apps = await HttpGetList<TeamsApp>($"/teams/{team.Id}/apps");
-                    if (apps.Where(app => app.Id == appid).Count() == 0)
+                    var apps = await HttpGetList<TeamsAppInstallation>($"/teams/{team.Id}/installedApps?$expand=teamsAppDefinition");
+                    if (apps.Where(app => app.TeamsAppDefinition.Id == appid).Count() == 0)
                     {
                         // Install app to the team
                         await HttpPost($"/teams/{team.Id}/apps",
                             "{ \"id\": \"" + appid + "\" }");
+                        // this will soon become:
+                        //await HttpPost($"/teams/{team.Id}/installedApps",
+                        //    "{ \"teamsApp\" : \"" + graphBetaEndpoint + "/appCatalogs/teamsApps/" + appid + "\" }");
                     }
                 }
             }
