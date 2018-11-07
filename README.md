@@ -47,7 +47,7 @@ To run, you'll need to register your own appid.
 
 - [GraphService.cs](/project/Models/GraphService.cs). This is where the Graph API calls are.
 
-- [GraphResources.cs](/project//Models/GraphResources.cs). Strongly typed wrappers for various Graph resources.
+- [GraphResource.cs](/project//Models/GraphResource.cs). Strongly typed wrappers for various Graph resources.
 
 - [HomeController.cs](/project/Controllers/HomeController.cs). Contains methods that drive the UI, as well as some authentication logic. 
 
