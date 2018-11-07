@@ -42,21 +42,39 @@ namespace ContosoAirlines.Models
     public class Team : GraphResource
     {
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public TeamGuestSettings GuestSettings { get; set; }
-
-        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string WebUrl { get; set; }
 
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string DisplayName { get; set; }
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsArchived { get; set; }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public TeamGuestSettings GuestSettings { get; set; }
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public TeamMemberSettings MemberSettings { get; set; }
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public TeamMessagingSettings MessagingSettings { get; set; }
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public TeamFunSettings FunSettings { get; set; }
     }
 
     public class TeamGuestSettings
     {
         public bool AllowCreateUpdateChannels { get; set; }
         public bool AllowDeleteChannels { get; set; }
+    }
+
+    public class TeamMemberSettings
+    {
+    }
+
+    public class TeamFunSettings
+    {
+    }
+
+    public class TeamMessagingSettings
+    {
     }
 
     public class PostMessage

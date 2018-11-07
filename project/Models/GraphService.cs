@@ -51,7 +51,10 @@ namespace ContosoAirlines.Models
                     {
                         AllowCreateUpdateChannels = false,
                         AllowDeleteChannels = false
-                    }
+                    },
+                    MemberSettings = new TeamMemberSettings() { },
+                    MessagingSettings = new TeamMessagingSettings() { },
+                    FunSettings = new TeamFunSettings() { },
                 },
                 retries: 3, retryDelay: 10);
             string teamId = group.Id; // always the same
