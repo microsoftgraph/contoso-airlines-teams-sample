@@ -45,13 +45,13 @@ To run, you'll need to register your own appid.
 
 > Note: To understand the code for calling the Microsoft Graph API in an ASP.NET MVC app, see [Get started with Microsoft Graph in an ASP.NET 4.6 MVC app](https://graph.microsoft.io/en-us/docs/platform/aspnetmvc).
 
-- [GraphService.cs](/Models/GraphService.cs). This is where the Graph API calls are.
+- [GraphService.cs](/project/Models/GraphService.cs). This is where the Graph API calls are.
 
-- [GraphResources.cs](/Models/GraphResources.cs). Strongly typed wrappers for various Graph resources.
+- [GraphResource.cs](/project//Models/GraphResource.cs). Strongly typed wrappers for various Graph resources.
 
-- [HomeController.cs](/Microsoft%20Graph%20SDK%20ASPNET%20Connect/Microsoft%20Graph%20SDK%20ASPNET%20Connect/Controllers/HomeController.cs). Contains methods that drive the UI, as well as some authentication logic. 
+- [HomeController.cs](/project/Controllers/HomeController.cs). Contains methods that drive the UI, as well as some authentication logic. 
 
-- [Graph.cshtml](/Microsoft%20Graph%20SDK%20ASPNET%20Connect/Microsoft%20Graph%20SDK%20ASPNET%20Connect/Views/Home/Graph.cshtml). Contains the sample's UI. 
+- [Graph.cshtml](/project/Views/Home/Graph.cshtml). Contains the sample's UI. 
 
 
 A lot of this code came from the [Graph Quickstart for ASP.NET MVC](https://developer.microsoft.com/en-us/graph/quick-start?platform=option-dotnet).
