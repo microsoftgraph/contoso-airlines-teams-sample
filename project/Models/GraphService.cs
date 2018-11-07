@@ -160,12 +160,8 @@ namespace ContosoAirlines.Models
                     var apps = await HttpGetList<TeamsAppInstallation>($"/teams/{team.Id}/installedApps?$expand=teamsAppDefinition");
                     if (apps.Where(app => app.TeamsAppDefinition.Id == appid).Count() == 0)
                     {
-                        // Install app to the team
-                        await HttpPost($"/teams/{team.Id}/apps",
-                            "{ \"id\": \"" + appid + "\" }");
-                        // this will soon become:
-                        //await HttpPost($"/teams/{team.Id}/installedApps",
-                        //    "{ \"teamsApp\" : \"" + graphBetaEndpoint + "/appCatalogs/teamsApps/" + appid + "\" }");
+                        await HttpPost($"/teams/{team.Id}/installedApps",
+                            "{ \"teamsApp@odata.bind\" : \"" + graphBetaEndpoint + "/appCatalogs/teamsApps/" + appid + "\" }");
                     }
                 }
             }
