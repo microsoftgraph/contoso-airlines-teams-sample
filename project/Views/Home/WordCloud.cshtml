@@ -1,0 +1,14 @@
+﻿<!--  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
+        See LICENSE in the source repository root for complete license information. -->
+@using Resources
+@{
+    ViewBag.Title = Resource.App_Name;
+}
+
+@model ContosoAirlines.Models.ResultsViewModel
+
+<img src="@Url.Action("WordCloudImage","Home")" alt="wordcloud" height="600" width="600">
+
+<br />
+
+@Html.ActionLink("Home", "Index", "Home")  <br />

@@ -1,0 +1,123 @@
+﻿<!--  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
+        See LICENSE in the source repository root for complete license information. -->
+@using Resources
+@{
+    ViewBag.Title = Resource.App_Name;
+}
+
+@model ContosoAirlines.Models.RootModel
+
+<div class="surface">
+    <div class="panel-body" style="margin-top:10px; padding-left:0px">
+        <table>
+            <tr>
+                <td width="250" valign="top">
+                    <h3 class="font-title2" style="margin-bottom:4px">Flights</h3>
+                    <div class="select-style">
+                        <select name="sometext" size="16" class="list" style="width: 250px">
+                            <option class="font-base" selected>209 RED-SFO 5/7/2018</option>
+                            <option class="font-base">210 SFO-RED 5/7/2018</option>
+                            <option class="font-base">214 RED-IAD 5/7/2018</option>
+                            <option class="font-base">215 IAD-RED 5/7/2018</option>
+                            <option class="font-base">310 RED-YUM 5/7/2018</option>
+                            <option class="font-base">311 YUM-RED 5/7/2018</option>
+                            <option class="font-base">320 RED-JFK 5/7/2018</option>
+                            <option class="font-base">321 JFK-RED 5/7/2018</option>
+                            <option class="font-base">326 RED-MIA 5/7/2018</option>
+                            <option class="font-base">327 MIA-RED 5/7/2018</option>
+                            <option class="font-base">210 SFO-RED 5/8/2018</option>
+                            <option class="font-base">214 RED-IAD 5/8/2018</option>
+                            <option class="font-base">215 IAD-RED 5/8/2018</option>
+                            <option class="font-base">310 RED-YUM 5/8/2018</option>
+                            <option class="font-base">311 YUM-RED 5/8/2018</option>
+                            <option class="font-base">320 RED-JFK 5/8/2018</option>
+                            <option class="font-base">321 JFK-RED 5/8/2018</option>
+                            <option class="font-base">326 RED-MIA 5/8/2018</option>
+                            <option class="font-base">327 MIA-RED 5/8/2018</option>
+                        </select>
+                        <div>
+                            <br/>
+                            @*@Html.ActionLink("Add flight", "DoesntExist", "Home")  <br />*@
+                            @Html.ActionLink("Create Team", "CreateTeam", "Home") <br />
+                            @Html.ActionLink("Install app to all teams", "InstallAppToAllTeams", "Home")<br />
+                            @Html.ActionLink("Create by cloning", "CloneTeam", "Home") <br />
+                            @Html.ActionLink("Archive all teams", "ArchiveAllTeams", "Home")<br />
+                            @*@Html.ActionLink("Bulk Delete", "BulkDelete", "Home") <br />*@
+                            @*@Html.ActionLink("Read messages", "ReadMessages", "Home")<br />*@
+                            @*@Html.ActionLink("Analytics", "Analytics", "Home")<br />*@
+                            @*@Html.ActionLink("Archive team", "ArchiveTeam", "Home")<br />*@
+                        </div>
+                    </div>
+                </td>
+                <td width="250" valign="top">
+                    <div style="margin-left:20px">
+                        <h3 class="font-title2" style="margin-bottom:4px">Flight Crew</h3>
+                        <select name="sometext" size="16" class="list" style="width: 250px">
+                            <option class="font-base">Grady Archie (Captain)</option>
+                            <option class="font-base">Isaiah Langer</option>
+                            <option class="font-base">Lee Gu</option>
+                            <option class="font-base">Alex Wilber</option>
+                            <option class="font-base">Allan Deyoung</option>
+                            <option class="font-base">Harvey Rayford</option>
+                            <option class="font-base">Debra Berger</option>
+                            <option class="font-base">Diego Siciliani</option>
+                            <option class="font-base">Emily Braun</option>
+                            <option class="font-base">Enrico Cattaneo</option>
+                            @*<option class="font-base">Adriana Napolitani</option>
+                                <option class="font-base">Gebhard Stein</option>
+                                <option class="font-base">Giorgia Angelo</option>
+                                <option class="font-base">Adele Vance</option>
+                                <option class="font-base">Christie Cline</option>
+                                <option class="font-base">Henrietta Mueller</option>
+                                <option class="font-base">Irvin Sayers</option>
+                                <option class="font-base">Isaiah Langer</option>*@
+
+                        </select>
+                        <div>
+                            <br />
+                            @*<a class="font-base">Add crew</a>*@
+                        </div>
+                        <div>
+                            <a class="font-base" style="visibility:hidden">blank</a>
+                        </div>
+
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<hr />
+
+@*@if (Model != null && Model.UREDppPermissions)*@
+@if (ContosoAirlines.Controllers.HomeController.useAppPermissions)
+{
+    <span>
+        Using application permissions (@Html.ActionLink("Switch to user delegated permissions", "UseUserDelegatedPermissions", "Home"))
+    </span>
+}
+else
+{
+    <span>
+        Using user delegated permissions (@Html.ActionLink("Switch to application permissions", "UREDpplicationPermissions", "Home"))
+    </span>
+}
+<br/>
+<a href="@ContosoAirlines.Controllers.HomeController.AdminConsentPromptUrl()">Request admin consent for app permissions</a>
+
+
+@*@if (Model != null)
+    {
+        @Html.CheckBoxFor(m => m.UREDppPermissions)
+        @Html.LabelFor(m => m.UREDppPermissions)
+    }*@
+
+@using (Html.BeginForm("CreateTeamDone", "Home"))
+{
+    if (ViewBag.CreateTeamDone != null)
+    {
+        <div><a href="@ViewBag.Url">Go to new team</a></div>
+    }
+}
+@*@Html.Partial("_ResultsPartial")*@
