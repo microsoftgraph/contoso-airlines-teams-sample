@@ -73,7 +73,7 @@ namespace ContosoAirlines.Models
             await HttpPost($"/teams/{teamId}/channels/{channel.Id}/tabs",
                 new TeamsTab()
                 {
-                    Name = "Map",
+                    DisplayName = "Map",
                     TeamsApp = $"{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
                     // It's serialized as "teamsApp@odata.bind" : "{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
                     Configuration = new TeamsTabConfiguration()
@@ -131,7 +131,7 @@ namespace ContosoAirlines.Models
             await HttpPost($"/teams/{groupId}/channels/{channelId}/tabs",
                 new TeamsTab
                 {
-                    Name = "Challenging Passengers",
+                    DisplayName = "Challenging Passengers",
                     TeamsApp = $"{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
                     // It's serialized as "teamsApp@odata.bind" : "{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
                     Configuration = new TeamsTabConfiguration
@@ -171,17 +171,15 @@ namespace ContosoAirlines.Models
 
         public async Task<string> CreateTeamUsingClone(Flight flight)
         {
-            var cloneRequest = new Clone()
-            {
-                displayName = "Flight 4" + flight.number,
-                mailNickName = "flight" + GetTimestamp(),
-                description = "Everything about flight " + flight.number,
-                teamVisibilityType = "Private",
-                partsToClone = "apps,settings,channels"
-            };
-
-            var response = await HttpPostWithHeaders($"/teams/{flight.prototypeTeamId}/clone", 
-                cloneRequest);
+            var response = await HttpPostWithHeaders($"/teams/{flight.prototypeTeamId}/clone",
+                new Clone()
+                {
+                    displayName = "Flight 4" + flight.number,
+                    mailNickName = "flight" + GetTimestamp(),
+                    description = "Everything about flight " + flight.number,
+                    teamVisibilityType = "Private",
+                    partsToClone = "apps,settings,channels"
+                });
             string operationUrl = response.Headers.Location.ToString();
 
             string teamId = null;
@@ -247,6 +245,8 @@ namespace ContosoAirlines.Models
 
                 if (operation.Status == AsyncOperationStatus.Succeeded)
                     break;
+
+                Thread.Sleep(10000); // wait 10 seconds between polls
             }
 
             return "success";
