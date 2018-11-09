@@ -30,14 +30,13 @@ To run, you'll need to register your own appid.
 
 9. Choose **Save**.
 
-10. Create a file named Web.config.secrets (put it next to Web.config), and add in your appid, app secret, and RedirectUri:
+10. Create a file named Web.config.secrets (put it next to Web.config), and add in your appid and app secret:
 
 ```
 <?xml version="1.0" encoding="utf-8"?>
   <appSettings >
     <add key="ida:AppId" value="xxxxx"/>
     <add key="ida:AppSecret" value="xxxxx"/>
-    <add key="ida:RedirectUri" value="xxxxx"/>
   </appSettings>
 ```
 
