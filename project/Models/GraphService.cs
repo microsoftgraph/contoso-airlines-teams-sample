@@ -74,8 +74,8 @@ namespace ContosoAirlines.Models
                 new TeamsTab()
                 {
                     DisplayName = "Map",
-                    TeamsApp = $"{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
-                    // It's serialized as "teamsApp@odata.bind" : "{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
+                    TeamsApp = $"{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
+                    // It's serialized as "teamsApp@odata.bind" : "{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
                     Configuration = new TeamsTabConfiguration()
                     {
                         EntityId = null,
@@ -132,8 +132,8 @@ namespace ContosoAirlines.Models
                 new TeamsTab
                 {
                     DisplayName = "Challenging Passengers",
-                    TeamsApp = $"{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
-                    // It's serialized as "teamsApp@odata.bind" : "{graphBetaEndpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
+                    TeamsApp = $"{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
+                    // It's serialized as "teamsApp@odata.bind" : "{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
                     Configuration = new TeamsTabConfiguration
                     {
                         ContentUrl = list.WebUrl,
@@ -163,7 +163,7 @@ namespace ContosoAirlines.Models
                     if (apps.Where(app => app.TeamsAppDefinition.Id == appid).Count() == 0)
                     {
                         await HttpPost($"/teams/{team.Id}/installedApps",
-                            "{ \"teamsApp@odata.bind\" : \"" + graphBetaEndpoint + "/appCatalogs/teamsApps/" + appid + "\" }");
+                            "{ \"teamsApp@odata.bind\" : \"" + graphV1Endpoint + "/appCatalogs/teamsApps/" + appid + "\" }");
                     }
                 }
             }
@@ -202,7 +202,7 @@ namespace ContosoAirlines.Models
             // Add the crew to the team
             foreach (string upn in flight.crew)
             {
-                string payload = $"{{ '@odata.id': '{graphBetaEndpoint}/users/{upn}' }}";
+                string payload = $"{{ '@odata.id': '{graphV1Endpoint}/users/{upn}' }}";
                 await HttpPost($"/groups/{teamId}/members/$ref", payload);
                 if (upn == flight.captain)
                     await HttpPost($"/groups/{teamId}/owners/$ref", payload);
@@ -260,8 +260,10 @@ namespace ContosoAirlines.Models
             if (HomeController.useAppPermissions)
             {
                 Group[] groups = await HttpGetList<Group>(
-                    $"/groups?$filter=resourceProvisioningOptions/Any(x:x eq 'Team')");
-                result = groups.Select(g => new Team() {
+                    $"/groups?$select=id,resourceProvisioningOptions,displayName");
+                result = groups
+                    .Where(g => g.ResourceProvisioningOptions.Contains("Team"))
+                    .Select(g => new Team() {
                     DisplayName = g.DisplayName, Id = g.Id
                 }).ToArray();
             }
@@ -280,7 +282,7 @@ namespace ContosoAirlines.Models
             foreach (var upn in userUpns)
             {
                 String userId = (await HttpGet<User>($"/users/{upn}")).Id;
-                userIds.Add($"{graphBetaEndpoint}/users/{userId}");
+                userIds.Add($"{graphV1Endpoint}/users/{userId}");
             }
 
             return userIds;

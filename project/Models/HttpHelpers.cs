@@ -30,8 +30,8 @@ namespace ContosoAirlines.Models
     {
         public HttpClient httpClient = new HttpClient();
         public string accessToken;
+        public string graphV1Endpoint= "https://graph.microsoft.com/v1.0";
         public string graphBetaEndpoint = "https://graph.microsoft.com/beta";
-        public string graphTestEndpoint = "https://graph.microsoft.com/testTeams1";
         public static readonly JsonSerializerSettings jsonSettings =
             new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
@@ -127,7 +127,7 @@ namespace ContosoAirlines.Models
             // BUG: Implement retries
 
             if (endpoint == null)
-                endpoint = graphBetaEndpoint;
+                endpoint = graphV1Endpoint;
 
             string bodyString;
             if (body == null)
@@ -165,7 +165,7 @@ namespace ContosoAirlines.Models
             // BUG: Implement retries
 
             if (endpoint == null)
-                endpoint = graphBetaEndpoint;
+                endpoint = graphV1Endpoint;
             string bodyString = (body == null) ? null : JsonConvert.SerializeObject(body, jsonSettings);
 
             Debug.Assert(accessToken != null);

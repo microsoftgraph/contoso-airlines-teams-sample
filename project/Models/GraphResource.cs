@@ -32,6 +32,9 @@ namespace ContosoAirlines.Models
 
         [JsonProperty(PropertyName = "owners@odata.bind", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public List<string> Owners { get; set; }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string[] ResourceProvisioningOptions { get; set; }
     }
 
     public class ProvisioningExtension
