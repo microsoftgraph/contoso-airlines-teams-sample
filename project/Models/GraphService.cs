@@ -85,17 +85,11 @@ namespace ContosoAirlines.Models
                     }
                 });
 
-            // Create SharePoint list
-            await CreateChallengingPassengersList(teamId, channel.Id);
+            // Now create a SharePoint list of challenging passengers
 
-            return group.Id;
-        }
-
-        private async Task<SharePointList> CreateChallengingPassengersList(string groupId, string channelId)
-        {
             // Get the team site
-            var teamSite = await HttpGet<Site>($"/groups/{groupId}/sites/root", 
-                retries: 3, retryDelay:30);
+            var teamSite = await HttpGet<Site>($"/groups/{teamId}/sites/root",
+                retries: 3, retryDelay: 30);
 
             // Create the list
             var list = (await HttpPost($"/sites/{teamSite.Id}/lists",
@@ -128,7 +122,7 @@ namespace ContosoAirlines.Models
                 );
 
             // Add the list as a team tab
-            await HttpPost($"/teams/{groupId}/channels/{channelId}/tabs",
+            await HttpPost($"/teams/{teamId}/channels/{channel.Id}/tabs",
                 new TeamsTab
                 {
                     DisplayName = "Challenging Passengers",
@@ -141,9 +135,8 @@ namespace ContosoAirlines.Models
                     }
                 });
 
-            return list;
+            return group.Id;
         }
-
 
         public async Task InstallAppToAllTeams()
         {
