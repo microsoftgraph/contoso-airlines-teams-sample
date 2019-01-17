@@ -339,6 +339,8 @@ namespace ContosoAirlines.Models
     {
         public string DisplayName { get; set; }
         public string Description { get; set; }
+        public string WebUrl { get; set; }
+        public string Email { get; set; }
     }
 
     public class ChatThread

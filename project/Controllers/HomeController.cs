@@ -134,12 +134,15 @@ namespace ContosoAirlines.Controllers
             try
             {
                 string accessToken = await GetToken(rootModel);
-                string groupId = await graphService.CreateTeam(new Flight(adminUpn));
+                var tuple = await graphService.CreateTeam(new Flight(adminUpn));
+                string groupId = tuple.Item1;
+                string link = tuple.Item2;
 
                 lastGroupCreated = groupId;
 
                 // Reset the status to display when the page reloads.
                 ViewBag.CreateTeamDone = "Enable";
+                ViewBag.Url = link;
 
                 return DefaultView(rootModel);
             }

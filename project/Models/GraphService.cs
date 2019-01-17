@@ -15,7 +15,7 @@ namespace ContosoAirlines.Models
 {
     public class GraphService : HttpHelpers
     {
-        public async Task<string> CreateTeam(Flight flight)
+        public async Task<Tuple<string, string>> CreateTeam(Flight flight)
         {
             var ownerUpns = new List<string>();
             ownerUpns.Add(flight.captain);
@@ -85,6 +85,11 @@ namespace ContosoAirlines.Models
                     }
                 });
 
+            // use beta endpoint to get a hyperlink to the channel
+            Channel channel2 = await HttpGet<Channel>($"/teams/{teamId}/channels/{channel.Id}",
+                endpoint: graphBetaEndpoint);
+            string webUrl = channel2.WebUrl;
+
             // Now create a SharePoint list of challenging passengers
 
             // Get the team site
@@ -135,7 +140,7 @@ namespace ContosoAirlines.Models
                     }
                 });
 
-            return group.Id;
+            return new Tuple<string, string>(group.Id, webUrl);
         }
 
         public async Task InstallAppToAllTeams()
