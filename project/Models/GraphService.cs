@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.Graph;
 
 namespace ContosoAirlines.Models
 {
@@ -82,11 +83,6 @@ namespace ContosoAirlines.Models
                     }
                 });
 
-            // use beta endpoint to get a hyperlink to the channel
-            Channel channel2 = await HttpGet<Channel>($"/teams/{teamId}/channels/{channel.Id}",
-                endpoint: graphBetaEndpoint);
-            string webUrl = channel2.WebUrl;
-
             // Now create a SharePoint list of challenging passengers
 
             // Get the team site
@@ -95,10 +91,10 @@ namespace ContosoAirlines.Models
 
             // Create the list
             var list = (await HttpPost($"/sites/{teamSite.Id}/lists",
-                new SharePointList
+                new Microsoft.Graph.List
                 {
                     DisplayName = "Challenging Passengers",
-                    Columns = new List<ColumnDefinition>()
+                    Columns = new ListColumnsCollectionPage()
                 {
                     new ColumnDefinition
                     {
@@ -117,7 +113,7 @@ namespace ContosoAirlines.Models
                     }
                 }
                 }))
-                .Deserialize<SharePointList>();
+                .Deserialize<Microsoft.Graph.List>();
 
             await HttpPost($"/sites/{teamSite.Id}/lists/{list.Id}/items",
                 challengingPassenger
@@ -164,13 +160,13 @@ namespace ContosoAirlines.Models
         public async Task<string> CreateTeamUsingClone(Flight flight)
         {
             var response = await HttpPostWithHeaders($"/teams/{flight.prototypeTeamId}/clone",
-                new Clone()
+                new TeamCloneRequestBody()
                 {
-                    displayName = "Flight 4" + flight.number,
-                    mailNickName = "flight" + GetTimestamp(),
-                    description = "Everything about flight " + flight.number,
-                    teamVisibilityType = "Private",
-                    partsToClone = "apps,settings,channels"
+                    DisplayName = "Flight 4" + flight.number,
+                    MailNickname = "flight" + GetTimestamp(),
+                    Description = "Everything about flight " + flight.number,
+                    Visibility = TeamVisibilityType.Private,
+                    PartsToClone = ClonableTeamParts.Apps | ClonableTeamParts.Settings | ClonableTeamParts.Channels,
                 });
             string operationUrl = response.Headers.Location.ToString();
 
@@ -254,7 +250,7 @@ namespace ContosoAirlines.Models
                 Group[] groups = await HttpGetList<Group>(
                     $"/groups?$select=id,resourceProvisioningOptions,displayName");
                 result = groups
-                    .Where(g => g.ResourceProvisioningOptions.Contains("Team"))
+                    .Where(g => g.ResourceProvisioningOptions.Contains("Team")) // beta; different API available in v1.0
                     .Select(g => new Team() {
                     DisplayName = g.DisplayName, Id = g.Id
                 }).ToArray();
@@ -292,29 +288,29 @@ namespace ContosoAirlines.Models
 
             // Create a "Pre-flight checklist" plan
             var plan = (await HttpPost($"/planner/plans",
-                new Plan
+                new PlannerPlan
                 {
                     Title = "Pre-flight Checklist",
                     Owner = groupId
                 }, retries: 5, retryDelay: 10))
-                .Deserialize<Plan>();
+                .Deserialize<PlannerPlan>();
 
             // Create buckets
             var toDoBucket = (await HttpPost($"/planner/buckets",
-                new Bucket
+                new PlannerBucket
                 {
                     Name = "To Do",
                     PlanId = plan.Id
                 }))
-            .Deserialize<Bucket>();
+            .Deserialize<PlannerBucket>();
 
             var completedBucket = (await HttpPost($"/planner/buckets",
-                new Bucket
+                new PlannerBucket
                 {
                     Name = "Completed",
                     PlanId = plan.Id
                 }))
-            .Deserialize<Bucket>();
+            .Deserialize<PlannerBucket>();
 
             // Create tasks in to-do bucket
             await HttpPost($"/planner/tasks",
@@ -339,8 +335,9 @@ namespace ContosoAirlines.Models
             await HttpPost($"/teams/{groupId}/channels/{channelId}/tabs",
                 new TeamsTab
                 {
-                    Name = "Pre-flight Checklist",
+                    DisplayName = "Pre-flight Checklist",
                     TeamsAppId = "com.microsoft.teamspace.tab.planner",
+
                     Configuration = new TeamsTabConfiguration
                     {
                         EntityId = plan.Id,
@@ -381,10 +378,10 @@ namespace ContosoAirlines.Models
 
         public async Task<string> GetChannelText(string teamId, string channelId)
         {
-            ChatMessage[] messages = await HttpGetList<ChatMessage>($"/teams/{teamId}/channels/{channelId}/messages");
-            string[] texts = messages.Select(m => m.Body.Content).ToArray();
-            string all = String.Join(" ", texts);
-            return all;
+            //ChatMessage[] messages = await HttpGetList<ChatMessage>($"/teams/{teamId}/channels/{channelId}/messages");
+            //string[] texts = messages.Select(m => m.Body.Content).ToArray();
+            //string all = String.Join(" ", texts);
+            //return all;
         }
 
         //private async Task CopyFlightLogToTeamFilesAsync(GraphService graphClient, string groupId)
@@ -441,17 +438,17 @@ namespace ContosoAirlines.Models
         //        });
 
 
-        public async Task<SharePointList> CreateSharePointListAsync(string siteId, SharePointList list)
+        public async Task<Microsoft.Graph.List> CreateSharePointListAsync(string siteId, Microsoft.Graph.List list)
         {
             var response = await HttpPost($"/sites/{siteId}/lists", list);
-            return JsonConvert.DeserializeObject<SharePointList>(response);
+            return JsonConvert.DeserializeObject<Microsoft.Graph.List>(response);
         }
 
         public async Task<string> GetAdminUpn()
         {
             // Figure out the members and owners
             var me = await HttpGet<User>($"/me");
-            return me.userPrincipalName;
+            return me.UserPrincipalName;
         }
 
 
