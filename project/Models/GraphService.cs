@@ -142,9 +142,6 @@ namespace ContosoAirlines.Models
 
         public async Task InstallAppToAllTeams()
         {
-            if (HomeController.useAppPermissions)
-                throw new Exception("Application permissions not currently supported");
-
             string appid = "0fd925a0-357f-4d25-8456-b3022aaa41a9"; // SurveyMonkey
             var teams = (await GetAllTeams()).Where(t => t.DisplayName.StartsWith("Flight 157"))
                 .ToArray();
