@@ -16,32 +16,45 @@ namespace ContosoAirlines.Models
 {
     public class GraphService : HttpHelpers
     {
+        public async Task<User> GetUserFromUpn(string upn)
+        {
+            var user = await HttpGet<User>($"/users/{upn}");
+            return user;
+        }
+
         public async Task<Tuple<string, string>> CreateTeam(Flight flight)
         {
-            var ownerUpns = new List<string>();
-            ownerUpns.Add(flight.captain);
-            ownerUpns.Add(flight.admin);
-            var ownerIds = await GetUserIds(ownerUpns.ToArray());
+            var owners = new User[] {
+                await GetUserFromUpn(flight.captain),
+                await GetUserFromUpn(flight.admin)
+            };
 
-            var memberIds = await GetUserIds(flight.crew);
-            memberIds.Add(await GetUserId(flight.admin));
-            memberIds.Add(await GetUserId(flight.captain));
+            var crewTasks = flight.crew.Select(async upn => await GetUserFromUpn(upn)).ToArray();
+            var crew = await Task.WhenAll(crewTasks);
+            var members = owners.Concat(crew).ToArray();
+
+
+            var groupDef = new Group()
+            {
+                DisplayName = "Flight " + flight.number,
+                MailNickname = "flight" + GetTimestamp(),
+                Description = "Everything about flight " + flight.number,
+                Visibility = "Private",
+                GroupTypes = new string[] { "Unified" }, // same for all teams
+                MailEnabled = true,                      // same for all teams
+                SecurityEnabled = false,                 // same for all teams
+
+                AdditionalData = new Dictionary<string, object>()
+                {
+                    ["owners@odata.bind"] = owners.Select(o => $"{graphV1Endpoint}/users/{o.Id}").ToArray(),
+                    ["members@odata.bind"] = members.Select(o => $"{graphV1Endpoint}/users/{o.Id}").ToArray(),
+                }
+            };
 
             // Create the modern group for the team
-            Group group = 
+            Group group =
                 (await HttpPost($"/groups",
-                            new Group()
-                            {
-                                DisplayName = "Flight " + flight.number,
-                                MailNickname = "flight" + GetTimestamp(),
-                                Description = "Everything about flight " + flight.number,
-                                Visibility = "Private",
-                                Owners = ownerIds,
-                                Members = memberIds,
-                                GroupTypes = new string[] { "Unified" }, // same for all teams
-                                MailEnabled = true,                      // same for all teams
-                                SecurityEnabled = false,                 // same for all teams
-                            }))
+                groupDef))
                 .Deserialize<Group>();
 
             // Create the team
@@ -72,7 +85,7 @@ namespace ContosoAirlines.Models
                 new TeamsTab()
                 {
                     DisplayName = "Map",
-                    TeamsApp = $"{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
+                    AdditionalData = new Dictionary<string, object>() { ["teamsApp@odata.bind"] = $"{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web" },
                     // It's serialized as "teamsApp@odata.bind" : "{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
                     Configuration = new TeamsTabConfiguration()
                     {
@@ -124,7 +137,7 @@ namespace ContosoAirlines.Models
                 new TeamsTab
                 {
                     DisplayName = "Challenging Passengers",
-                    TeamsApp = $"{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web", // Website tab
+                    AdditionalData = new Dictionary<string, object>() { ["teamsApp@odata.bind"] = $"{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web" }, // Website tab
                     // It's serialized as "teamsApp@odata.bind" : "{graphV1Endpoint}/appCatalogs/teamsApps/com.microsoft.teamspace.tab.web"
                     Configuration = new TeamsTabConfiguration
                     {
@@ -133,7 +146,7 @@ namespace ContosoAirlines.Models
                     }
                 });
 
-            return new Tuple<string, string>(group.Id, webUrl);
+            return new Tuple<string, string>(group.Id, "");// webUrl);
         }
 
         public async Task InstallAppToAllTeams()
@@ -144,7 +157,7 @@ namespace ContosoAirlines.Models
             foreach (var team in teams)
             {
                 var t = await HttpGet<Team>($"/teams/{team.Id}");
-                if (!t.IsArchived)
+                if (t.IsArchived == true)
                 {
                     // See if it's already installed
                     var apps = await HttpGetList<TeamsAppInstallation>($"/teams/{team.Id}/installedApps?$expand=teamsAppDefinition");
@@ -175,12 +188,12 @@ namespace ContosoAirlines.Models
             {
                 TeamsAsyncOperation operation = await HttpGet<TeamsAsyncOperation>(operationUrl);
 
-                if (operation.Status == AsyncOperationStatus.Failed)
+                if (operation.Status == TeamsAsyncOperationStatus.Failed)
                     throw new Exception();
 
-                if (operation.Status == AsyncOperationStatus.Succeeded)
+                if (operation.Status == TeamsAsyncOperationStatus.Succeeded)
                 {
-                    teamId = operation.targetResourceId;
+                    teamId = operation.TargetResourceId;
                     break;
                 }
 
@@ -212,7 +225,7 @@ namespace ContosoAirlines.Models
             foreach (var team in teams)
             {
                 var t = await HttpGet<Team>($"/teams/{team.Id}");
-                if (!t.IsArchived)
+                if (!t.IsArchived == true)
                 {
                     await ArchiveTeam(team.Id);
                 }
@@ -228,10 +241,10 @@ namespace ContosoAirlines.Models
             {
                 var operation = await HttpGet<TeamsAsyncOperation>(operationUrl);
 
-                if (operation.Status == AsyncOperationStatus.Failed)
+                if (operation.Status == TeamsAsyncOperationStatus.Failed)
                     throw new Exception();
 
-                if (operation.Status == AsyncOperationStatus.Succeeded)
+                if (operation.Status == TeamsAsyncOperationStatus.Succeeded)
                     break;
 
                 Thread.Sleep(10000); // wait 10 seconds between polls
@@ -242,110 +255,108 @@ namespace ContosoAirlines.Models
 
         // Get all the teams you have access to. For user delegated, look at the joinedTeams.
         // For application permissions, get all teams in the tenant.
-        private async Task<Team[]> GetAllTeams()
+        private async Task<Group[]> GetAllTeams()
         {
-            Team[] result;
+            Group[] result;
             if (HomeController.useAppPermissions)
             {
                 Group[] groups = await HttpGetList<Group>(
                     $"/groups?$select=id,resourceProvisioningOptions,displayName");
                 result = groups
-                    .Where(g => g.ResourceProvisioningOptions.Contains("Team")) // beta; different API available in v1.0
-                    .Select(g => new Team() {
-                    DisplayName = g.DisplayName, Id = g.Id
-                }).ToArray();
+                    .Where(g => true) // g.AdditionalData["ResourceProvisioningOptions"].Contains("Team")) // beta; different API available in v1.0
+                    .ToArray();
             }
             else
             {
-                result = await HttpGetList<Team>($"/me/joinedTeams");
+                result = await HttpGetList<Group>($"/me/joinedTeams");
             }
             return result;
         }
 
-        public async Task<List<string>> GetUserIds(string[] userUpns)
+        public async Task<User[]> GetUserIds(string[] userUpns)
         {
-            var userIds = new List<string>();
+            var users = new List<User>();
 
             // Look up each user to get their Id property
             foreach (var upn in userUpns)
             {
-                String userId = (await HttpGet<User>($"/users/{upn}")).Id;
-                userIds.Add($"{graphV1Endpoint}/users/{userId}");
+                var user = await HttpGet<User>($"/users/{upn}");
+                users.Add(user);
             }
 
-            return userIds;
+            return users.ToArray();
         }
 
-        public async Task<string> GetUserId(string userUpn)
+        public async Task<User> GetUserId(string userUpn)
             => (await GetUserIds(new string[] { userUpn })).First();
 
 
 #region
         private async Task CreatePreflightPlan(string groupId, string channelId, DateTimeOffset departureTime, Flight flight)
         {
-            // Create Planner plan and tasks
-            //await CreatePreflightPlan(teamId, channel.Id, DateTimeOffset.Now, flight);
+            //// Create Planner plan and tasks
+            ////await CreatePreflightPlan(teamId, channel.Id, DateTimeOffset.Now, flight);
 
-            // Create a "Pre-flight checklist" plan
-            var plan = (await HttpPost($"/planner/plans",
-                new PlannerPlan
-                {
-                    Title = "Pre-flight Checklist",
-                    Owner = groupId
-                }, retries: 5, retryDelay: 10))
-                .Deserialize<PlannerPlan>();
+            //// Create a "Pre-flight checklist" plan
+            //var plan = (await HttpPost($"/planner/plans",
+            //    new PlannerPlan
+            //    {
+            //        Title = "Pre-flight Checklist",
+            //        Owner = groupId
+            //    }, retries: 5, retryDelay: 10))
+            //    .Deserialize<PlannerPlan>();
 
-            // Create buckets
-            var toDoBucket = (await HttpPost($"/planner/buckets",
-                new PlannerBucket
-                {
-                    Name = "To Do",
-                    PlanId = plan.Id
-                }))
-            .Deserialize<PlannerBucket>();
+            //// Create buckets
+            //var toDoBucket = (await HttpPost($"/planner/buckets",
+            //    new PlannerBucket
+            //    {
+            //        Name = "To Do",
+            //        PlanId = plan.Id
+            //    }))
+            //.Deserialize<PlannerBucket>();
 
-            var completedBucket = (await HttpPost($"/planner/buckets",
-                new PlannerBucket
-                {
-                    Name = "Completed",
-                    PlanId = plan.Id
-                }))
-            .Deserialize<PlannerBucket>();
+            //var completedBucket = (await HttpPost($"/planner/buckets",
+            //    new PlannerBucket
+            //    {
+            //        Name = "Completed",
+            //        PlanId = plan.Id
+            //    }))
+            //.Deserialize<PlannerBucket>();
 
-            // Create tasks in to-do bucket
-            await HttpPost($"/planner/tasks",
-                new PlannerTask
-                {
-                    Title = "Perform pre-flight inspection of aircraft",
-                    PlanId = plan.Id,
-                    BucketId = toDoBucket.Id,
-                    DueDateTime = departureTime.ToUniversalTime()
-                });
+            //// Create tasks in to-do bucket
+            //await HttpPost($"/planner/tasks",
+            //    new PlannerTask
+            //    {
+            //        Title = "Perform pre-flight inspection of aircraft",
+            //        PlanId = plan.Id,
+            //        BucketId = toDoBucket.Id,
+            //        DueDateTime = departureTime.ToUniversalTime()
+            //    });
 
-            await HttpPost($"/planner/tasks",
-                new PlannerTask
-                {
-                    Title = "Ensure food and beverages are fully stocked",
-                    PlanId = plan.Id,
-                    BucketId = toDoBucket.Id,
-                    DueDateTime = departureTime.ToUniversalTime()
-                });
+            //await HttpPost($"/planner/tasks",
+            //    new PlannerTask
+            //    {
+            //        Title = "Ensure food and beverages are fully stocked",
+            //        PlanId = plan.Id,
+            //        BucketId = toDoBucket.Id,
+            //        DueDateTime = departureTime.ToUniversalTime()
+            //    });
 
-            // Add planner tab to Pilots channel
-            await HttpPost($"/teams/{groupId}/channels/{channelId}/tabs",
-                new TeamsTab
-                {
-                    DisplayName = "Pre-flight Checklist",
-                    TeamsAppId = "com.microsoft.teamspace.tab.planner",
+            //// Add planner tab to Pilots channel
+            //await HttpPost($"/teams/{groupId}/channels/{channelId}/tabs",
+            //    new TeamsTab
+            //    {
+            //        DisplayName = "Pre-flight Checklist",
+            //        TeamsAppId = "com.microsoft.teamspace.tab.planner",
 
-                    Configuration = new TeamsTabConfiguration
-                    {
-                        EntityId = plan.Id,
-                        ContentUrl = $"https://tasks.office.com/{flight.tenantName}/Home/PlannerFrame?page=7&planId={plan.Id}&auth_pvr=Orgid&auth_upn={{upn}}&mkt={{locale}}",
-                        RemoveUrl = $"https://tasks.office.com/{flight.tenantName}/Home/PlannerFrame?page=13&planId={plan.Id}&auth_pvr=Orgid&auth_upn={{upn}}&mkt={{locale}}",
-                        WebsiteUrl = $"https://tasks.office.com/{flight.tenantName}/Home/PlanViews/{plan.Id}"
-                    }
-                });
+            //        Configuration = new TeamsTabConfiguration
+            //        {
+            //            EntityId = plan.Id,
+            //            ContentUrl = $"https://tasks.office.com/{flight.tenantName}/Home/PlannerFrame?page=7&planId={plan.Id}&auth_pvr=Orgid&auth_upn={{upn}}&mkt={{locale}}",
+            //            RemoveUrl = $"https://tasks.office.com/{flight.tenantName}/Home/PlannerFrame?page=13&planId={plan.Id}&auth_pvr=Orgid&auth_upn={{upn}}&mkt={{locale}}",
+            //            WebsiteUrl = $"https://tasks.office.com/{flight.tenantName}/Home/PlanViews/{plan.Id}"
+            //        }
+            //    });
         }
 
         public async Task CreateChannel(string teamId, string channelName)
@@ -376,13 +387,13 @@ namespace ContosoAirlines.Models
             }
         }
 
-        public async Task<string> GetChannelText(string teamId, string channelId)
-        {
-            //ChatMessage[] messages = await HttpGetList<ChatMessage>($"/teams/{teamId}/channels/{channelId}/messages");
-            //string[] texts = messages.Select(m => m.Body.Content).ToArray();
-            //string all = String.Join(" ", texts);
-            //return all;
-        }
+        //public async Task<string> GetChannelText(string teamId, string channelId)
+        //{
+        //    //ChatMessage[] messages = await HttpGetList<ChatMessage>($"/teams/{teamId}/channels/{channelId}/messages");
+        //    //string[] texts = messages.Select(m => m.Body.Content).ToArray();
+        //    //string all = String.Join(" ", texts);
+        //    //return all;
+        //}
 
         //private async Task CopyFlightLogToTeamFilesAsync(GraphService graphClient, string groupId)
         //{
@@ -454,7 +465,7 @@ namespace ContosoAirlines.Models
 
         public async Task BulkDelete()
         {
-            Team[] teams = await HttpGetList<Team>($"/me/joinedTeams");
+            Group[] teams = await HttpGetList<Group>($"/me/joinedTeams");
             var relevant = teams.Where(t => t.DisplayName.StartsWith("Flight 158")).ToArray();
             foreach (var t in relevant)
             {
