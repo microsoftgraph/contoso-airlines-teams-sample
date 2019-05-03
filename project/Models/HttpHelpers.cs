@@ -29,6 +29,25 @@ namespace ContosoAirlines.Models
 
     public class HttpHelpers
     {
+        // Get an Authenticated Microsoft Graph client using the token issued to the user.
+        public GraphServiceClient GetAuthenticatedClient()
+        {
+            var graphClient = new GraphServiceClient(
+                new DelegateAuthenticationProvider(
+                    requestMessage =>
+                    {
+                        // Append the access token to the request.
+                        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("bearer", accessToken);
+
+                        // Get event times in the current time zone.
+                        requestMessage.Headers.Add("Prefer", "outlook.timezone=\"" + TimeZoneInfo.Local.Id + "\"");
+
+                        return Task.CompletedTask;
+                    }));
+            return graphClient;
+        }
+
+
         public HttpClient httpClient = new HttpClient();
         public string accessToken;
         public string graphV1Endpoint= "https://graph.microsoft.com/v1.0";

@@ -108,6 +108,7 @@ namespace ContosoAirlines.Controllers
         
         private async Task<string> GetToken(RootModel rootModel)
         {
+            AdminConsentPromptUrl();
             string token;
             if (HomeController.useAppPermissions)
             {
