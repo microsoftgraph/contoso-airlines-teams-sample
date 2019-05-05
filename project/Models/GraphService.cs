@@ -97,38 +97,36 @@ namespace ContosoAirlines.Models
 
             // Now create a SharePoint list of challenging passengers
 
-            //graph.Groups[teamId].Sites.r
             // Get the team site
             var teamSite = await HttpGet<Site>($"/groups/{teamId}/sites/root",
                 retries: 3, retryDelay: 30);
 
             // Create the list
-            var list = (await HttpPost($"/sites/{teamSite.Id}/lists",
-                new Microsoft.Graph.List
-                {
-                    DisplayName = "Challenging Passengers",
-                Columns = new ListColumnsCollectionPage() 
-                {
-                    new ColumnDefinition
-                    {
-                        Name = "Name",
-                        Text = new TextColumn()
-                    },
-                    new ColumnDefinition
-                    {
-                        Name = "SeatNumber",
-                        Text = new TextColumn()
-                    },
-                    new ColumnDefinition
-                    {
-                        Name = "Notes",
-                        Text = new TextColumn()
-                    }
-                }
-                }))
-                .Deserialize<Microsoft.Graph.List>();
+            var list = await graph.Sites[teamSite.Id].Lists.Request().AddAsync(
+                                new Microsoft.Graph.List
+                                {
+                                    DisplayName = "Challenging Passengers",
+                                    Columns = new ListColumnsCollectionPage()
+                                    {
+                                        new ColumnDefinition
+                                        {
+                                            Name = "Name",
+                                            Text = new TextColumn()
+                                        },
+                                        new ColumnDefinition
+                                        {
+                                            Name = "SeatNumber",
+                                            Text = new TextColumn()
+                                        },
+                                        new ColumnDefinition
+                                        {
+                                            Name = "Notes",
+                                            Text = new TextColumn()
+                                        }
+                                    }
+                                }
+                                );
 
-            //graph.Sites[teamSite.Id].Lists[list.Id].Request().CreateAsync()
             await HttpPost($"/sites/{teamSite.Id}/lists/{list.Id}/items",
                 challengingPassenger
                 );
