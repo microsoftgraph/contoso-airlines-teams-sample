@@ -177,15 +177,6 @@ namespace ContosoAirlines.Models
 
         public async Task<string> CreateTeamUsingClone(Flight flight)
         {
-            var graph = GetAuthenticatedClient();
-            //var response = await graph.Teams[flight.prototypeTeamId].Clone(
-            //        displayName: "Flight 4" + flight.number,
-            //        mailNickname: "flight" + GetTimestamp(),
-            //        description: "Everything about flight " + flight.number,
-            //    visibility: TeamVisibilityType.Private,
-            //        partsToClone: ClonableTeamParts.Apps | ClonableTeamParts.Settings | ClonableTeamParts.Channels
-            //        ).Request().PostAsync();
-
             var response = await HttpPostWithHeaders($"/teams/{flight.prototypeTeamId}/clone",
                 new TeamCloneRequestBody()
                 {
@@ -215,6 +206,8 @@ namespace ContosoAirlines.Models
                 Thread.Sleep(10000); // wait 10 seconds between polls
             }
 
+            var graph = GetAuthenticatedClient();
+
             // Add the crew to the team
             foreach (string upn in flight.crew)
             {
@@ -233,7 +226,7 @@ namespace ContosoAirlines.Models
 
             return link;
         }
-
+        
         public async Task ArchiveAllTeams()
         {
             var graph = GetAuthenticatedClient();
@@ -503,6 +496,22 @@ namespace ContosoAirlines.Models
             string timestamp = $"{now.Hour}{now.Minute}{now.Second}";
             return timestamp;
         }
-#endregion
+
+        // clone
+        //var httpRequest = graph.Teams[flight.prototypeTeamId].Clone(
+        //                    displayName: "Flight 4" + flight.number,
+        //                    mailNickname: "flight" + GetTimestamp(),
+        //                    description: "Everything about flight " + flight.number,
+        //                    visibility: TeamVisibilityType.Private,
+        //                    partsToClone: ClonableTeamParts.Apps | ClonableTeamParts.Settings | ClonableTeamParts.Channels
+        //                    ).Request().GetHttpRequestMessage();
+
+        //httpRequest.Method = HttpMethod.Post;
+        //httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        //httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        //HttpResponseMessage response = await new HttpClient().SendAsync(httpRequest);
+
+
+        #endregion
     }
 }
