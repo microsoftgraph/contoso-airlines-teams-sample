@@ -159,7 +159,7 @@ namespace ContosoAirlines.Models
             foreach (var team in teams)
             {
                 var t = await graph.Teams[team.Id].Request().GetAsync();
-                if (t.IsArchived == true)
+                if (t.IsArchived == false)
                 {
                     // See if it's already installed
                     var apps = await graph.Teams[team.Id].InstalledApps.Request().Expand("teamsAppDefinition").GetAsync();
@@ -218,12 +218,13 @@ namespace ContosoAirlines.Models
             // Add the crew to the team
             foreach (string upn in flight.crew)
             {
+                var user = await GetUserFromUpn(upn);
                 await graph.Groups[teamId].Members.References.Request().AddAsync(
-                    new DirectoryObject() { Id = upn });
+                    user);
 
                 if (upn == flight.captain)
                     await graph.Groups[teamId].Owners.References.Request().AddAsync(
-                        new DirectoryObject() { Id = upn });
+                        user);
             }
 
             // get the webUrl
@@ -483,7 +484,6 @@ namespace ContosoAirlines.Models
             var me = await HttpGet<User>($"/me");
             return me.UserPrincipalName;
         }
-
 
         public async Task BulkDelete()
         {
