@@ -1,38 +1,42 @@
 # Contoso Airlines sample for Microsoft Teams Graph APIs
 
-This sample demonstrates using the Microsoft Graph APIs for Microsoft teams to automate team lifecycles for Contoso Airlines: every night, they create a new team for each flight they are flying the following day, and after the flight, they archive the team. This sample 
+This sample demonstrates using the Microsoft Graph APIs for Microsoft teams to automate team lifecycles for Contoso Airlines: every night, they create a new team for each flight they are flying the following day, and after the flight, they archive the team.
 
 ## Build and run
 
-To run, you'll need to register your own appid.
+To run, you'll need to register your application.
 
-1. Sign into the [App Registration Portal](https://apps.dev.microsoft.com/) using either your personal or work or school account.
+1. Sign into the Azure [app registration portal](https://go.microsoft.com/fwlink/?linkid=2083908) using either your personal or work or school account.
 
-2. Choose **Add an app**.
+2. Choose **New registration** near the top.
 
-3. Enter a name for the app, and choose **Create application**. 
-	
-   The registration page displays, listing the properties of your app.
+3. Enter a name for the app. Under **Supported account types**, select **Accounts in any organizational directory and personal Microsoft accounts (e.g. Skype, Xbox, Outlook.com)**.
 
-4. Copy the Application Id. This is the unique identifier for your app. 
+4. For **Redirect URI (optional)**, choose **Web** and then enter *http://localhost:55065/*.
 
-5. Under **Application Secrets**, choose **Generate New Password**. Copy the password from the **New password generated** dialog.
+   The app overview page displays, listing the properties of your app.
 
-   You'll use the application ID and password to configure the sample app in the next section. 
+5. Copy the value for **Application (client) ID**. This is the unique identifier for your app.
 
-6. Under **Platforms**, choose **Add platform**.
+6. Select the **Certificated & secrets** page. Under **Client secrets**, choose **New client secret**.
 
-7. Choose **Web**.
+7. Enter a label for the client secret and select an expiration period. Select **Add**.
 
-8. Make sure the **Allow Implicit Flow** check box is selected, and enter *http://localhost:55065/* as the Redirect URI. 
+8. Copy the value for your new client secret. This is the only time you will be able to see this value.
 
-   The **Allow Implicit Flow** option enables the hybrid flow. During authentication, this enables the app to receive both sign-in info (the id_token) and artifacts (in this case, an authorization code) that the app can use to obtain an access token.
+   You'll use the application ID and secret to configure the sample app in the next section.
 
-9. Choose **Save**.
+9. Navigate to the **Authentication** page.
 
-10. Create a file named Web.config.secrets (put it next to Web.config), and add in your appid and app secret:
+10. Under **Advanced settings**, find the **Implicit grant** section. Check the boxes for **Access tokens** and **ID tokens** to enable implicit flow.
 
-```
+    These options enable the hybrid flow. During authentication, this enables the app to receive both sign-in info (the id_token) and artifacts (in this case, an authorization code) that the app can use to obtain an access token.
+
+11. Choose **Save** at the top.
+
+12. Create a file named Web.config.secrets (put it next to Web.config), and add in your application ID and client (app) secret:
+
+```xml
 <?xml version="1.0" encoding="utf-8"?>
   <appSettings >
     <add key="ida:AppId" value="xxxxx"/>
@@ -48,10 +52,9 @@ To run, you'll need to register your own appid.
 
 - [GraphResource.cs](/project//Models/GraphResource.cs). Strongly typed wrappers for various Graph resources.
 
-- [HomeController.cs](/project/Controllers/HomeController.cs). Contains methods that drive the UI, as well as some authentication logic. 
+- [HomeController.cs](/project/Controllers/HomeController.cs). Contains methods that drive the UI, as well as some authentication logic.
 
-- [Graph.cshtml](/project/Views/Home/Graph.cshtml). Contains the sample's UI. 
-
+- [Graph.cshtml](/project/Views/Home/Graph.cshtml). Contains the sample's UI.
 
 A lot of this code came from the [Graph Quickstart for ASP.NET MVC](https://developer.microsoft.com/en-us/graph/quick-start?platform=option-dotnet).
 
@@ -61,7 +64,7 @@ We'd love to get your feedback about this sample. You can send us your questions
 
 Your feedback is important to us. Connect with us on [Stack Overflow](http://stackoverflow.com/questions/tagged/microsoftgraph). Tag your questions with [MicrosoftGraph].
 
-## Contributing ##
+## Contributing
 
 If you'd like to contribute to this sample, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -76,4 +79,5 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 - [Office dev center](http://dev.office.com/)
 
 ## Copyright
+
 Copyright (c) 2018 Microsoft. All rights reserved.
