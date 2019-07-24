@@ -290,7 +290,6 @@ namespace ContosoAirlines.Controllers
         {
             try
             {
-                //string tenant = "M365x165177.onmicrosoft.com";
                 string appId = ConfigurationManager.AppSettings["ida:AppId"];
                 string appSecret = ConfigurationManager.AppSettings["ida:AppSecret"];
 

@@ -401,14 +401,6 @@ namespace ContosoAirlines.Models
             }
         }
 
-        //public async Task<string> GetChannelText(string teamId, string channelId)
-        //{
-        //    //ChatMessage[] messages = await HttpGetList<ChatMessage>($"/teams/{teamId}/channels/{channelId}/messages");
-        //    //string[] texts = messages.Select(m => m.Body.Content).ToArray();
-        //    //string all = String.Join(" ", texts);
-        //    //return all;
-        //}
-
         //private async Task CopyFlightLogToTeamFilesAsync(GraphService graphClient, string groupId)
         //{
         //    // Upload flight log to team files
@@ -494,21 +486,6 @@ namespace ContosoAirlines.Models
             string timestamp = $"{now.Hour}{now.Minute}{now.Second}";
             return timestamp;
         }
-
-        // clone
-        //var httpRequest = graph.Teams[flight.prototypeTeamId].Clone(
-        //                    displayName: "Flight 4" + flight.number,
-        //                    mailNickname: "flight" + GetTimestamp(),
-        //                    description: "Everything about flight " + flight.number,
-        //                    visibility: TeamVisibilityType.Private,
-        //                    partsToClone: ClonableTeamParts.Apps | ClonableTeamParts.Settings | ClonableTeamParts.Channels
-        //                    ).Request().GetHttpRequestMessage();
-
-        //httpRequest.Method = HttpMethod.Post;
-        //httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        //httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        //HttpResponseMessage response = await new HttpClient().SendAsync(httpRequest);
-
 
         #endregion
     }
