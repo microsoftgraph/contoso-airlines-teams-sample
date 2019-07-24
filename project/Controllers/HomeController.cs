@@ -196,6 +196,27 @@ namespace ContosoAirlines.Controllers
             }
         }
 
+
+        [Authorize]
+        public async Task<ActionResult> InstallAppToAllUsers(RootModel rootModel)
+        {
+            try
+            {
+                string accessToken = await GetToken(rootModel);
+                await graphService.InstallAppToAllUsers();
+
+                // Reset the status to display when the page reloads.
+                ViewBag.CreateTeamDone = "Enable";
+
+                return DefaultView(rootModel);
+            }
+            catch (ServiceException se)
+            {
+                if (se.Error.Message == Resource.Error_AuthChallengeNeeded) return new EmptyResult();
+                return RedirectToAction("Index", "Error", new { message = Resource.Error_Message + Request.RawUrl + ": " + se.Error.Message });
+            }
+        }
+
         [Authorize]
         public async Task<ActionResult> BulkDelete(RootModel rootModel)
         {

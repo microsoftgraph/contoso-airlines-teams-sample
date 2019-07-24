@@ -173,6 +173,27 @@ namespace ContosoAirlines.Models
             }
         }
 
+        public async Task InstallAppToAllUsers()
+        {
+            string appid = "f46ad259-0fe5-4f12-872d-c737b174bcb4"; // Adobe
+
+            var graph = GetAuthenticatedClient();
+            var users = await graph.Users.Request().Select("id,displayName").GetAsync();
+            foreach (User user in users)
+            {
+                if (user.DisplayName.StartsWith("Megan"))
+                {
+                    TeamsAppInstallation[] installs = await HttpGetList<TeamsAppInstallation>($"/users/{user.Id}/teamwork/installedApps?$expand=teamsAppDefinition", endpoint: graphBetaEndpoint);
+                    await HttpPost($"/users/{user.Id}/teamwork/installedApps",
+                            new TeamsAppInstallation()
+                            {
+                                AdditionalData = new Dictionary<string, object>() { ["teamsApp@odata.bind"] = $"{graphBetaEndpoint}/appCatalogs/teamsApps/{appid}" }
+                            },
+                            endpoint: graphBetaEndpoint);
+                }
+            }
+        }
+
         public async Task<string> CreateTeamUsingClone(Flight flight)
         {
             var response = await HttpPostWithHeaders($"/teams/{flight.prototypeTeamId}/clone",
@@ -305,7 +326,7 @@ namespace ContosoAirlines.Models
             => (await GetUserIds(new string[] { userUpn })).First();
 
 
-#region
+        #region
         private async Task CreatePreflightPlan(string groupId, string channelId, DateTimeOffset departureTime, Flight flight)
         {
             //// Create Planner plan and tasks
