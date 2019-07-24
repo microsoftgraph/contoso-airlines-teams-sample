@@ -20,8 +20,8 @@ namespace ContosoAirlines.Controllers
 {
     public class Flight
     {
-        public string tenantName = "M365x165177.onmicrosoft.com";
-        public string prototypeTeamId = "64b9c746-b155-4042-8d47-941bd381681b";
+        public string tenantName = HomeController.tenantName;
+        public string prototypeTeamId = "478cb696-2ce1-488a-bf9b-aef9d2a8d844"; //"dc8523a5-c737-48a7-b301-cfd2e232d32c";
         public string number = "157";
 
         public string captain;
@@ -48,6 +48,8 @@ namespace ContosoAirlines.Controllers
 
     public class HomeController : Controller
     {
+        public static string tenantName;// = "M365x874506.onmicrosoft.com";
+
         GraphService graphService = new GraphService();
         public static bool useAppPermissions = true; // hack
         private static string adminUpn = null;
@@ -67,6 +69,7 @@ namespace ContosoAirlines.Controllers
                     // always user delegated
                     graphService.accessToken = await SampleAuthProvider.Instance.GetUserAccessTokenAsync();
                     HomeController.adminUpn = await graphService.GetAdminUpn();
+                    HomeController.tenantName = adminUpn.Split('@')[1];
                 }
 
                 return DefaultView(rootModel);
@@ -106,15 +109,15 @@ namespace ContosoAirlines.Controllers
         
         private async Task<string> GetToken(RootModel rootModel)
         {
+            string consentPrompt = AdminConsentPromptUrl(); // for debugging only
             string token;
-            // if (rootModel.UseAppPermissions)
             if (HomeController.useAppPermissions)
             {
                 string appId = ConfigurationManager.AppSettings["ida:AppId"];
                 string redirectUri = ConfigurationManager.AppSettings["ida:RedirectUri"];
                 string appSecret = ConfigurationManager.AppSettings["ida:AppSecret"];
 
-                string tenant = "M365x165177.onmicrosoft.com";
+                string tenant = HomeController.tenantName;
                 string response = await HttpHelpers.POST($"https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token",
                       $"grant_type=client_credentials&client_id={appId}&client_secret={appSecret}"
                       + "&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default");
@@ -134,12 +137,15 @@ namespace ContosoAirlines.Controllers
             try
             {
                 string accessToken = await GetToken(rootModel);
-                string groupId = await graphService.CreateTeam(new Flight(adminUpn));
+                var tuple = await graphService.CreateTeam(new Flight(adminUpn));
+                string groupId = tuple.Item1;
+                string link = tuple.Item2;
 
                 lastGroupCreated = groupId;
 
                 // Reset the status to display when the page reloads.
                 ViewBag.CreateTeamDone = "Enable";
+                ViewBag.Url = link;
 
                 return DefaultView(rootModel);
             }
@@ -284,11 +290,10 @@ namespace ContosoAirlines.Controllers
         {
             try
             {
-                string tenant = "M365x165177.onmicrosoft.com";
                 string appId = ConfigurationManager.AppSettings["ida:AppId"];
                 string appSecret = ConfigurationManager.AppSettings["ida:AppSecret"];
 
-                string response = await HttpHelpers.POST($"https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token",
+                string response = await HttpHelpers.POST($"https://login.microsoftonline.com/{tenantName}/oauth2/v2.0/token",
                       $"grant_type=client_credentials&client_id={appId}&client_secret={appSecret}"
                       + "&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default");
                 string accessToken = response.Deserialize<TokenResponse>().access_token;
