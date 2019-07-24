@@ -97,38 +97,36 @@ namespace ContosoAirlines.Models
 
             // Now create a SharePoint list of challenging passengers
 
-            //graph.Groups[teamId].Sites.r
             // Get the team site
             var teamSite = await HttpGet<Site>($"/groups/{teamId}/sites/root",
                 retries: 3, retryDelay: 30);
 
             // Create the list
-            var list = (await HttpPost($"/sites/{teamSite.Id}/lists",
-                new Microsoft.Graph.List
-                {
-                    DisplayName = "Challenging Passengers",
-                Columns = new ListColumnsCollectionPage() 
-                {
-                    new ColumnDefinition
-                    {
-                        Name = "Name",
-                        Text = new TextColumn()
-                    },
-                    new ColumnDefinition
-                    {
-                        Name = "SeatNumber",
-                        Text = new TextColumn()
-                    },
-                    new ColumnDefinition
-                    {
-                        Name = "Notes",
-                        Text = new TextColumn()
-                    }
-                }
-                }))
-                .Deserialize<Microsoft.Graph.List>();
+            var list = await graph.Sites[teamSite.Id].Lists.Request().AddAsync(
+                                new Microsoft.Graph.List
+                                {
+                                    DisplayName = "Challenging Passengers",
+                                    Columns = new ListColumnsCollectionPage()
+                                    {
+                                        new ColumnDefinition
+                                        {
+                                            Name = "Name",
+                                            Text = new TextColumn()
+                                        },
+                                        new ColumnDefinition
+                                        {
+                                            Name = "SeatNumber",
+                                            Text = new TextColumn()
+                                        },
+                                        new ColumnDefinition
+                                        {
+                                            Name = "Notes",
+                                            Text = new TextColumn()
+                                        }
+                                    }
+                                }
+                                );
 
-            //graph.Sites[teamSite.Id].Lists[list.Id].Request().CreateAsync()
             await HttpPost($"/sites/{teamSite.Id}/lists/{list.Id}/items",
                 challengingPassenger
                 );
@@ -159,7 +157,7 @@ namespace ContosoAirlines.Models
             foreach (var team in teams)
             {
                 var t = await graph.Teams[team.Id].Request().GetAsync();
-                if (t.IsArchived == true)
+                if (t.IsArchived == false)
                 {
                     // See if it's already installed
                     var apps = await graph.Teams[team.Id].InstalledApps.Request().Expand("teamsAppDefinition").GetAsync();
@@ -177,15 +175,6 @@ namespace ContosoAirlines.Models
 
         public async Task<string> CreateTeamUsingClone(Flight flight)
         {
-            var graph = GetAuthenticatedClient();
-            //var response = await graph.Teams[flight.prototypeTeamId].Clone(
-            //        displayName: "Flight 4" + flight.number,
-            //        mailNickname: "flight" + GetTimestamp(),
-            //        description: "Everything about flight " + flight.number,
-            //    visibility: TeamVisibilityType.Private,
-            //        partsToClone: ClonableTeamParts.Apps | ClonableTeamParts.Settings | ClonableTeamParts.Channels
-            //        ).Request().PostAsync();
-
             var response = await HttpPostWithHeaders($"/teams/{flight.prototypeTeamId}/clone",
                 new TeamCloneRequestBody()
                 {
@@ -215,15 +204,18 @@ namespace ContosoAirlines.Models
                 Thread.Sleep(10000); // wait 10 seconds between polls
             }
 
+            var graph = GetAuthenticatedClient();
+
             // Add the crew to the team
             foreach (string upn in flight.crew)
             {
+                var user = await GetUserFromUpn(upn);
                 await graph.Groups[teamId].Members.References.Request().AddAsync(
-                    new DirectoryObject() { Id = upn });
+                    user);
 
                 if (upn == flight.captain)
                     await graph.Groups[teamId].Owners.References.Request().AddAsync(
-                        new DirectoryObject() { Id = upn });
+                        user);
             }
 
             // get the webUrl
@@ -232,7 +224,7 @@ namespace ContosoAirlines.Models
 
             return link;
         }
-
+        
         public async Task ArchiveAllTeams()
         {
             var graph = GetAuthenticatedClient();
@@ -484,7 +476,6 @@ namespace ContosoAirlines.Models
             return me.UserPrincipalName;
         }
 
-
         public async Task BulkDelete()
         {
             Group[] teams = await HttpGetList<Group>($"/me/joinedTeams");
@@ -503,6 +494,22 @@ namespace ContosoAirlines.Models
             string timestamp = $"{now.Hour}{now.Minute}{now.Second}";
             return timestamp;
         }
-#endregion
+
+        // clone
+        //var httpRequest = graph.Teams[flight.prototypeTeamId].Clone(
+        //                    displayName: "Flight 4" + flight.number,
+        //                    mailNickname: "flight" + GetTimestamp(),
+        //                    description: "Everything about flight " + flight.number,
+        //                    visibility: TeamVisibilityType.Private,
+        //                    partsToClone: ClonableTeamParts.Apps | ClonableTeamParts.Settings | ClonableTeamParts.Channels
+        //                    ).Request().GetHttpRequestMessage();
+
+        //httpRequest.Method = HttpMethod.Post;
+        //httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        //httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        //HttpResponseMessage response = await new HttpClient().SendAsync(httpRequest);
+
+
+        #endregion
     }
 }
