@@ -183,13 +183,25 @@ namespace ContosoAirlines.Models
             {
                 if (user.DisplayName.StartsWith("Megan"))
                 {
+                    // Check if the app is already installed
                     TeamsAppInstallation[] installs = await HttpGetList<TeamsAppInstallation>($"/users/{user.Id}/teamwork/installedApps?$expand=teamsAppDefinition", endpoint: graphBetaEndpoint);
-                    await HttpPost($"/users/{user.Id}/teamwork/installedApps",
-                            new TeamsAppInstallation()
-                            {
-                                AdditionalData = new Dictionary<string, object>() { ["teamsApp@odata.bind"] = $"{graphBetaEndpoint}/appCatalogs/teamsApps/{appid}" }
-                            },
-                            endpoint: graphBetaEndpoint);
+                    if (installs.Where(app => app.TeamsAppDefinition.TeamsAppId == appid).Count() == 0)
+                    {
+                        // install app
+                        await HttpPost($"/users/{user.Id}/teamwork/installedApps",
+                                new TeamsAppInstallation()
+                                {
+                                    AdditionalData = new Dictionary<string, object>() { ["teamsApp@odata.bind"] = $"{graphBetaEndpoint}/appCatalogs/teamsApps/{appid}" }
+                                },
+                                endpoint: graphBetaEndpoint);
+                    }
+                    
+                    // Find the chat thread id
+                    var chats = await HttpGetList<Chat>($"/users/{user.Id}/chats?$filter=installedApps/any(a:a/teamsApp/id eq '{appid}')", endpoint: graphBetaEndpoint);
+                    string threadId = chats[0].Id; // Use this id in your bot to send a message
+
+                    // Wait a little before installing the next app to avoid throttling
+                    Thread.Sleep(1000); 
                 }
             }
         }
