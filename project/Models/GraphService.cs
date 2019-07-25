@@ -198,11 +198,12 @@ namespace ContosoAirlines.Models
                                     AdditionalData = new Dictionary<string, object>() { ["teamsApp@odata.bind"] = $"{graphBetaEndpoint}/appCatalogs/teamsApps/{appid}" }
                                 },
                                 endpoint: graphBetaEndpoint);
+                        // Bot will get a notification about the new user and the chat thread ID for that user
                     }
-                    
-                    // Find the chat thread id
+
+                    // If you've forgotten the chat thread ID for that user, you can find it again:
                     var chats = await HttpGetList<Chat>($"/users/{user.Id}/chats?$filter=installedApps/any(a:a/teamsApp/id eq '{appid}')", endpoint: graphBetaEndpoint);
-                    string threadId = chats[0].Id; // Use this id in your bot to send a message
+                    string threadId = chats[0].Id;
 
                     // Wait a little before installing the next app to avoid throttling
                     Thread.Sleep(1000); 
