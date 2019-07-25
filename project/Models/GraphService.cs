@@ -183,9 +183,13 @@ namespace ContosoAirlines.Models
             {
                 if (user.DisplayName.StartsWith("Megan"))
                 {
-                    // Check if the app is already installed
-                    TeamsAppInstallation[] installs = await HttpGetList<TeamsAppInstallation>($"/users/{user.Id}/teamwork/installedApps?$expand=teamsAppDefinition", endpoint: graphBetaEndpoint);
-                    if (installs.Where(app => app.TeamsAppDefinition.TeamsAppId == appid).Count() == 0)
+                    // Check if the app is already installed for that user.
+                    // Use $expand to populate the teamsAppDefinition property,
+                    // and $filter to search for the one app we care about
+                    TeamsAppInstallation[] installs = await HttpGetList<TeamsAppInstallation>(
+                        $"/users/{user.Id}/teamwork/installedApps?$expand=teamsAppDefinition&$filter=teamsAppDefinition/teamsAppId eq '{appid}'", 
+                        endpoint: graphBetaEndpoint);
+                    if (installs.Length == 0)
                     {
                         // install app
                         await HttpPost($"/users/{user.Id}/teamwork/installedApps",
