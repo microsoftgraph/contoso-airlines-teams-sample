@@ -91,6 +91,14 @@ namespace ContosoAirlines.Models
             return result;
         }
 
+        public async Task<string> HttpGetRaw(string uri, string endpoint = null, int retries = 0, int retryDelay = 30)
+        {
+            string response = await CallGraph(HttpMethod.Get, uri, endpoint: endpoint, retries: retries, retryDelay: retryDelay);
+            return response;
+        }
+
+
+
         public async Task<string> HttpPost(string uri, object body, string endpoint = null, int retries = 0, int retryDelay = 30)
         {
             return await CallGraph(HttpMethod.Post, uri, body, endpoint: endpoint, retries: retries, retryDelay: retryDelay);
