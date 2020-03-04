@@ -181,8 +181,8 @@ namespace ContosoAirlines.Models
             var users = await graph.Users.Request().Select("id,displayName").GetAsync();
             foreach (User user in users)
             {
-                //if (user.DisplayName.StartsWith("Megan"))
-                //{
+                if (user.DisplayName.StartsWith("MOD")) // for demo purposes, only do one user
+                {
                     // Check if the app is already installed for that user.
                     // Use $expand to populate the teamsAppDefinition property,
                     // and $filter to search for the one app we care about
@@ -207,7 +207,7 @@ namespace ContosoAirlines.Models
 
                     // Wait a little before installing the next app to avoid throttling
                     Thread.Sleep(1000); 
-                //}
+                }
             }
         }
 
