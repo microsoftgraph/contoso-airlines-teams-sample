@@ -151,7 +151,7 @@ namespace ContosoAirlines.Models
         public async Task InstallAppToAllTeams()
         {
             var graph = GetAuthenticatedClient();
-            string appid = "0fd925a0-357f-4d25-8456-b3022aaa41a9"; // SurveyMonkey
+            string appid = "1542629c-01b3-4a6d-8f76-1938b779e48d"; // Polly
             var teams = (await GetAllTeams()).Where(t => t.DisplayName.StartsWith("Flight 157"))
                 .ToArray();
             foreach (var team in teams)
@@ -175,7 +175,7 @@ namespace ContosoAirlines.Models
 
         public async Task InstallAppToAllUsers()
         {
-            string appid = "f46ad259-0fe5-4f12-872d-c737b174bcb4"; // Adobe
+            string appid = "1542629c-01b3-4a6d-8f76-1938b779e48d"; // Polly
 
             var graph = GetAuthenticatedClient();
             var users = await graph.Users.Request().Select("id,displayName").GetAsync();
@@ -311,15 +311,23 @@ namespace ContosoAirlines.Models
             Group[] result;
             if (HomeController.useAppPermissions)
             {
-                var groups = await graph.Groups.Request().Select("id,resourceProvisioningOptions,displayName").GetAsync();
+                var groups = await graph.Groups.Request()
+                    .Select("id,resourceProvisioningOptions,displayName").GetAsync();
                 result = groups
-                    .Where(g => true) // g.AdditionalData["ResourceProvisioningOptions"].Contains("Team")) // beta; different API available in v1.0
+                    .Where(g => g.ResourceProvisioningOptions.Contains("Team"))
                     .ToArray();
+
+                // in beta, you can do service-side filtering, too:
+                //groups = await graph.Groups.Request()
+                //    .Select("id,resourceProvisioningOptions,displayName")
+                //    .Filter("resourceProvisioningOptions/Any(x:x eq 'Team')").GetAsync();
+                //result = groups.ToArray();
             }
             else
             {
                 var teams = await graph.Me.JoinedTeams.Request().GetAsync();
-                result = teams.Select(t => new Group() { Id = t.Id, DisplayName = t.DisplayName }).ToArray();
+                result = teams.Select(t => new Group() { Id = t.Id, DisplayName = t.DisplayName })
+                    .ToArray();
             }
             return result;
         }
