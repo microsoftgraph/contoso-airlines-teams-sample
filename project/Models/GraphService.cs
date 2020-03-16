@@ -151,7 +151,7 @@ namespace ContosoAirlines.Models
         public async Task InstallAppToAllTeams()
         {
             var graph = GetAuthenticatedClient();
-            string appid = "0fd925a0-357f-4d25-8456-b3022aaa41a9"; // SurveyMonkey
+            string appid = "1542629c-01b3-4a6d-8f76-1938b779e48d"; // Polly
             var teams = (await GetAllTeams()).Where(t => t.DisplayName.StartsWith("Flight 157"))
                 .ToArray();
             foreach (var team in teams)
@@ -169,6 +169,44 @@ namespace ContosoAirlines.Models
                             AdditionalData = new Dictionary<string, object>() { ["teamsApp@odata.bind"] = $"{graphV1Endpoint}/appCatalogs/teamsApps/{appid}" }
                         });
                     }
+                }
+            }
+        }
+
+        public async Task InstallAppToAllUsers()
+        {
+            string appid = "1542629c-01b3-4a6d-8f76-1938b779e48d"; // Polly
+
+            var graph = GetAuthenticatedClient();
+            var users = await graph.Users.Request().Select("id,displayName").GetAsync();
+            foreach (User user in users)
+            {
+                if (user.DisplayName.StartsWith("MOD")) // for demo purposes, only do one user
+                {
+                    // Check if the app is already installed for that user.
+                    // Use $expand to populate the teamsAppDefinition property,
+                    // and $filter to search for the one app we care about
+                    TeamsAppInstallation[] installs = await HttpGetList<TeamsAppInstallation>(
+                        $"/users/{user.Id}/teamwork/installedApps?$expand=teamsAppDefinition&$filter=teamsAppDefinition/teamsAppId eq '{appid}'", 
+                        endpoint: graphBetaEndpoint);
+                    if (installs.Length == 0)
+                    {
+                        // install app
+                        await HttpPost($"/users/{user.Id}/teamwork/installedApps",
+                                new TeamsAppInstallation()
+                                {
+                                    AdditionalData = new Dictionary<string, object>() { ["teamsApp@odata.bind"] = $"{graphBetaEndpoint}/appCatalogs/teamsApps/{appid}" }
+                                },
+                                endpoint: graphBetaEndpoint);
+                        // Bot will get a notification about the new user and the chat thread ID for that user
+                    }
+
+                    // If you've forgotten the chat thread ID for that user, you can find it again:
+                    var chats = await HttpGetList<Chat>($"/users/{user.Id}/chats?$filter=installedApps/any(a:a/teamsApp/id eq '{appid}')", endpoint: graphBetaEndpoint);
+                    string threadId = chats[0].Id;
+
+                    // Wait a little before installing the next app to avoid throttling
+                    Thread.Sleep(1000); 
                 }
             }
         }
@@ -273,15 +311,23 @@ namespace ContosoAirlines.Models
             Group[] result;
             if (HomeController.useAppPermissions)
             {
-                var groups = await graph.Groups.Request().Select("id,resourceProvisioningOptions,displayName").GetAsync();
+                var groups = await graph.Groups.Request()
+                    .Select("id,resourceProvisioningOptions,displayName").GetAsync();
                 result = groups
-                    .Where(g => true) // g.AdditionalData["ResourceProvisioningOptions"].Contains("Team")) // beta; different API available in v1.0
+                    .Where(g => g.ResourceProvisioningOptions.Contains("Team"))
                     .ToArray();
+
+                // in beta, you can do service-side filtering, too:
+                //groups = await graph.Groups.Request()
+                //    .Select("id,resourceProvisioningOptions,displayName")
+                //    .Filter("resourceProvisioningOptions/Any(x:x eq 'Team')").GetAsync();
+                //result = groups.ToArray();
             }
             else
             {
                 var teams = await graph.Me.JoinedTeams.Request().GetAsync();
-                result = teams.Select(t => new Group() { Id = t.Id, DisplayName = t.DisplayName }).ToArray();
+                result = teams.Select(t => new Group() { Id = t.Id, DisplayName = t.DisplayName })
+                    .ToArray();
             }
             return result;
         }
@@ -305,7 +351,7 @@ namespace ContosoAirlines.Models
             => (await GetUserIds(new string[] { userUpn })).First();
 
 
-#region
+        #region
         private async Task CreatePreflightPlan(string groupId, string channelId, DateTimeOffset departureTime, Flight flight)
         {
             //// Create Planner plan and tasks
